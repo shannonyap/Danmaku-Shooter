@@ -12,6 +12,7 @@ function preload() {
   game.load.image('starfield', 'assets/starfield.jpg');
   game.load.image('player', 'assets/spaceship.png');
   game.load.image('bullet', 'assets/bullet.png');
+  game.load.image('enemy', 'assets/enemy.png');
 }
 
 function create() {
@@ -31,10 +32,21 @@ function create() {
   bullets.setAll('checkWorldBounds', true);
 
   fireButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+
+  var timer = game.time.create(false);
+  timer.loop(5000, createEnemyGroup1, this);
+  timer.start();
 }
 
 function update() {
   spacefield.tilePosition.y += 5;
+  playerControls();
+  if (fireButton.isDown) {
+    fireBullet();
+  }
+}
+
+function playerControls() {
   player.body.velocity.x = 0;
   player.body.velocity.y = 0;
 
@@ -53,10 +65,6 @@ function update() {
   if (cursors.down.isDown && player.world.y < game.height - player.height) {
     player.body.velocity.y = 350;
   }
-
-  if (fireButton.isDown) {
-    fireBullet();
-  }
 }
 
 function fireBullet() {
@@ -69,4 +77,30 @@ function fireBullet() {
       bulletTime = game.time.now + 100;
     }
   }
+}
+
+function createEnemyGroup1() {
+  var enemiesGroup1 = game.add.group();
+  enemiesGroup1.enableBody = true;
+  enemiesGroup1.physicsBodyType = Phaser.Physics.ARCADE;
+  for (var i = 0; i < 5; i++) {
+      var enemy = enemiesGroup1.create(10, i * 40, 'enemy');
+      enemy.scale.setTo(0.05, 0.05);
+      enemy.anchor.setTo(0.5, 0.5);
+      enemy.body.velocity.y = 200;
+      enemy.checkWorldBounds = true;
+      enemy.events.onOutOfBounds.add(removeEnemy, this);
+  }
+  enemiesGroup1.x = getRandomInt(0, game.width);
+  enemiesGroup1.y = -game.height * 0.3;
+}
+
+function removeEnemy(enemy) {
+  if (enemy.y > game.height) {
+    enemy.kill();
+  }
+}
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
