@@ -13,6 +13,7 @@ function preload() {
   game.load.image('player', 'assets/spaceship.png');
   game.load.image('bullet', 'assets/bullet.png');
   game.load.image('enemy', 'assets/enemy.png');
+  game.load.image('enemyBullet', 'assets/enemyBullet.png');
 }
 
 function create() {
@@ -34,7 +35,7 @@ function create() {
   fireButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 
   var timer = game.time.create(false);
-  timer.loop(5000, createEnemyGroup1, this);
+  timer.loop(3000, createEnemyGroup1, this);
   timer.start();
 }
 
@@ -72,7 +73,7 @@ function fireBullet() {
     bullet = bullets.getFirstExists(false);
 
     if (bullet) {
-      bullet.reset(player.x + game.width * 0.0325, player.y);
+      bullet.reset(player.x + player.width * 0.5, player.y);
       bullet.body.velocity.y = -1200;
       bulletTime = game.time.now + 100;
     }
@@ -83,13 +84,39 @@ function createEnemyGroup1() {
   var enemiesGroup1 = game.add.group();
   enemiesGroup1.enableBody = true;
   enemiesGroup1.physicsBodyType = Phaser.Physics.ARCADE;
-  for (var i = 0; i < 5; i++) {
-      var enemy = enemiesGroup1.create(10, i * 40, 'enemy');
+  for (var i = 0; i < 1; i++) {
+      var enemy = enemiesGroup1.create(10, 10, 'enemy');
       enemy.scale.setTo(0.05, 0.05);
       enemy.anchor.setTo(0.5, 0.5);
-      enemy.body.velocity.y = 200;
+      enemy.body.velocity.y = 50;
       enemy.checkWorldBounds = true;
       enemy.events.onOutOfBounds.add(removeEnemy, this);
+
+      //  Set up firing
+      var bulletSpeed = 400;
+      var firingDelay = 1000;
+      var enemyBulletTime = 0;
+      var enemyBullets = game.add.group();
+      enemyBullets.enableBody = true;
+      enemyBullets.physicsBodyType = Phaser.Physics.ARCADE;
+      enemyBullets.createMultiple(100, 'enemyBullet');
+    //  enemyBullets.scale.set(0.5, 0.5);
+      enemyBullets.setAll('anchor.x', 0.5);
+      enemyBullets.setAll('anchor.y', 1);
+      enemyBullets.setAll('outOfBoundsKill', true);
+      enemyBullets.setAll('checkWorldBounds', true);
+
+      enemy.update = function() {
+        if (game.time.now > enemyBulletTime) {
+          enemyBullet = enemyBullets.getFirstExists(false);
+          if (enemyBullet) {
+            enemyBullet.reset(enemiesGroup1.x, this.y - enemy.width * 4.5);
+            var angle = game.physics.arcade.moveToObject(enemyBullet, player, bulletSpeed);
+            enemyBullet.angle = game.math.radToDeg(angle);
+            enemyBulletTime = game.time.now + firingDelay;
+          }
+        }
+      }
   }
   enemiesGroup1.x = getRandomInt(0, game.width);
   enemiesGroup1.y = -game.height * 0.3;
