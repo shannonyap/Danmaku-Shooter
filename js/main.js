@@ -43,7 +43,7 @@ function preload() {
 }
 
 function create() {
-  explosion = game.add.audio('explosion');
+  explosion = game.add.audio('explosionSound');
   game.sound.setDecodedCallback([explosion], this);
   spacefield = game.add.tileSprite(0,0,window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio, 'starfield');
   revivePlayer();
