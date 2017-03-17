@@ -24,6 +24,8 @@ var shootingWaveTimer;
 var radialShootingWaveTimer;
 var circleShootingWaveTimer;
 
+var laserShotSound;
+var circleLaserShot;
 var explosion;
 
 function preload() {
@@ -40,11 +42,12 @@ function preload() {
   game.load.image('playAgainButton', 'assets/playAgain.png');
   game.load.spritesheet('explosion', 'assets/explosion.png');
   game.load.audio('explosionSound', 'assets/explosion.mp3');
+  game.load.audio('laserShotSound', 'assets/laserShotSound.mp3');
+  game.load.audio('circleLaserShotSound', 'assets/circleLaserShotSound.mp3');
 }
 
 function create() {
   explosion = game.add.audio('explosionSound');
-  game.sound.setDecodedCallback([explosion], this);
   spacefield = game.add.tileSprite(0,0,window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio, 'starfield');
   revivePlayer();
   cursors = game.input.keyboard.createCursorKeys();
@@ -92,7 +95,7 @@ function create() {
   circleShootingWaveTimer.start();
 }
 
-function actionOnClick () {
+function actionOnClick() {
   killAll(noShootingEnemies);
   killAll(shootingEnemies);
   killAll(shootingEnemiesBullets);
@@ -155,6 +158,8 @@ function fireBullet() {
   if (game.time.now > bulletTime) {
     bullet = bullets.getFirstExists(false);
     if (bullet) {
+      var laserShotSound = game.add.audio('laserShotSound');
+      laserShotSound.play();
       bullet.reset(player.x + player.width * 0.5, player.y);
       bullet.body.velocity.y = -1200;
       bulletTime = game.time.now + 100;
@@ -354,6 +359,8 @@ function createCircleShootingEnemyGroup(position) {
             }
             j--;
           }
+          var circleLaserShot = game.add.audio('circleLaserShotSound');
+          circleLaserShot.play();
         }
       }
     }
@@ -389,9 +396,6 @@ function collisionHandler(bullet, enemy) {
   if (enemy.health > 0) {
     enemy.health -= 50;
     enemy.tint = 0xff3655;
-    setTimeout(function() {
-      enemy.tint = originalTint;
-    }, (100));
   } else if (enemy.health <= 0) {
     var width = enemy.width;
     var height = enemy.height;
@@ -401,6 +405,9 @@ function collisionHandler(bullet, enemy) {
       enemy.kill();
     }, (50));
   }
+  setTimeout(function() {
+    enemy.tint = originalTint;
+  }, (100));
 }
 
 function removeEnemy(enemy) {
