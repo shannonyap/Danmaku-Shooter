@@ -17,6 +17,8 @@ function preload() {
   game.load.image('shootingEnemyBullet', 'assets/shootingEnemyBullet.png');
   game.load.image('radialShootingEnemy', 'assets/radialShootingEnemy.png');
   game.load.image('radialShootingEnemyBullet', 'assets/radialShootingEnemyBullet.png');
+  game.load.image('circleShootingEnemy', 'assets/circleShootingEnemy.png');
+  game.load.image('circleShootingEnemyBullet', 'assets/circleShootingEnemyBullet.png');
 }
 
 function create() {
@@ -36,7 +38,7 @@ function create() {
   bullets.setAll('checkWorldBounds', true);
 
   fireButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-/*
+
   var timer = game.time.create(false);
   timer.loop(getRandomInt(3000, 7001), createNoShootingEnemyGroup, this);
   timer.start();
@@ -48,9 +50,10 @@ function create() {
   var timer3 = game.time.create(false);
   timer3.loop(getRandomInt(6000, 10001), createRadialShootingEnemyGroupWave, this);
   timer3.start();
-*/
 
-createRadialShootingEnemyGroupWave();
+  var timer4 = game.time.create(false);
+  timer4.loop(getRandomInt(9000, 11001), createCircleShootingEnemyGroupWave, this);
+  timer4.start();
 }
 
 function update() {
@@ -178,7 +181,7 @@ function createRadialShootingEnemyGroup() {
 
     //  Set up firing
     var radialShootingEnemyBulletSpeed = 300;
-    var firingDelay = 100;
+    var firingDelay = 50;
     var radialShootingEnemyBulletTime = 0;
     var radialShootingEnemyBullets = game.add.group();
     radialShootingEnemyBullets.enableBody = true;
@@ -192,6 +195,7 @@ function createRadialShootingEnemyGroup() {
     var bulletVelocityX = -180;
     var bulletVelocityY = -180;
     enemy.update = function() {
+      this.angle += 1;
       game.physics.arcade.overlap(bullets, radialShootingEnemiesGroup, collisionHandler, null, this);
       if (this.y - this.height >= game.height / 2 + this.height) {
         this.body.velocity.y = 0;
@@ -217,6 +221,74 @@ function createRadialShootingEnemyGroup() {
 function createRadialShootingEnemyGroupWave() {
   createRadialShootingEnemyGroup();
   createRadialShootingEnemyGroup();
+}
+
+function createCircleShootingEnemyGroup(position) {
+  var circleShootingEnemiesGroup = game.add.group();
+  circleShootingEnemiesGroup.enableBody = true;
+  circleShootingEnemiesGroup.physicsBodyType = Phaser.Physics.ARCADE;
+  for (var i = 0; i < 1; i++) {
+    var enemy = circleShootingEnemiesGroup.create(0, 50, 'circleShootingEnemy');
+    circleShootingEnemiesGroup.x = position;
+    enemy.anchor.setTo(0.5, 0.5);
+    enemy.body.velocity.y = 300;
+    enemy.checkWorldBounds = true;
+    enemy.events.onOutOfBounds.add(removeEnemy, this);
+
+    //  Set up firing
+    var circleShootingEnemyBulletSpeed = 300;
+    var firingDelay = 3000;
+    var circleShootingEnemyBulletTime = 0;
+    var circleShootingEnemyBullets = game.add.group();
+    circleShootingEnemyBullets.enableBody = true;
+    circleShootingEnemyBullets.physicsBodyType = Phaser.Physics.ARCADE;
+    circleShootingEnemyBullets.createMultiple(100, 'circleShootingEnemyBullet');
+    circleShootingEnemyBullets.setAll('anchor.x', 0.5);
+    circleShootingEnemyBullets.setAll('anchor.y', 1);
+    circleShootingEnemyBullets.setAll('outOfBoundsKill', true);
+    circleShootingEnemyBullets.setAll('checkWorldBounds', true);
+
+    var demoTween = game.add.tween(enemy).to({ x: game.width * 0.3}, 5000);
+    var anotherTween = game.add.tween(enemy).to({ x: game.width * -0.3}, 5000);
+    demoTween.chain(anotherTween);
+    demoTween.start();
+    demoTween.chainedTween.onComplete.add(function (enemy, tween) {
+      tween = demoTween;
+      tween.start();
+    }, this);
+    enemy.update = function() {
+      game.physics.arcade.overlap(bullets, circleShootingEnemiesGroup, collisionHandler, null, this);
+      if (this.y - this.height >= game.height / 2) {
+        this.body.velocity.y = 0;
+      }
+      if (this.body.velocity.y == 0) {
+        if (game.time.now > circleShootingEnemyBulletTime && this.alive) {
+          var amount, start, step, i, angle, speed;
+          amount = 20;
+          start = Math.PI * -1;
+          step = Math.PI / amount * 2;
+          j = amount;
+          while (j > 0) {
+            enemyBullet = circleShootingEnemyBullets.getFirstExists(false);
+            if (enemyBullet) {
+              enemyBullet.reset(this.x + circleShootingEnemiesGroup.x, this.y - game.height * 0.28);
+              var angle = start + j * step;
+              enemyBullet.body.velocity.x = Math.cos(angle) * circleShootingEnemyBulletSpeed;
+              enemyBullet.body.velocity.y = Math.sin(angle) * circleShootingEnemyBulletSpeed;
+              circleShootingEnemyBulletTime = game.time.now + firingDelay;
+            }
+            j--;
+          }
+        }
+      }
+    }
+  }
+  circleShootingEnemiesGroup.y = -game.height * 0.3;
+}
+
+function createCircleShootingEnemyGroupWave() {
+  createCircleShootingEnemyGroup(game.width * 0.3);
+  createCircleShootingEnemyGroup(game.width * 0.6);
 }
 
 function collisionHandler(bullet, enemy) {
