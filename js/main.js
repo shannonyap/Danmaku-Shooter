@@ -36,7 +36,7 @@ function create() {
   bullets.setAll('checkWorldBounds', true);
 
   fireButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-
+/*
   var timer = game.time.create(false);
   timer.loop(getRandomInt(3000, 7001), createNoShootingEnemyGroup, this);
   timer.start();
@@ -48,7 +48,9 @@ function create() {
   var timer3 = game.time.create(false);
   timer3.loop(getRandomInt(6000, 10001), createRadialShootingEnemyGroupWave, this);
   timer3.start();
+*/
 
+createRadialShootingEnemyGroupWave();
 }
 
 function update() {
@@ -83,7 +85,6 @@ function playerControls() {
 function fireBullet() {
   if (game.time.now > bulletTime) {
     bullet = bullets.getFirstExists(false);
-
     if (bullet) {
       bullet.reset(player.x + player.width * 0.5, player.y);
       bullet.body.velocity.y = -1200;
@@ -123,7 +124,7 @@ function createShootingEnemyGroup() {
         if (game.time.now > shootingEnemyBulletTime && enemy.alive) {
           enemyBullet = shootingEnemyBullets.getFirstExists(false);
           if (enemyBullet) {
-            enemyBullet.reset(shootingEnemiesGroup.x, this.y - this.width * 4.5);
+            enemyBullet.reset(shootingEnemiesGroup.x, this.y - game.height * 0.25);
             var angle = game.physics.arcade.moveToObject(enemyBullet, player, shootingEnemyBulletSpeed);
             enemyBullet.angle = game.math.radToDeg(angle);
             shootingEnemyBulletTime = game.time.now + firingDelay;
@@ -199,7 +200,7 @@ function createRadialShootingEnemyGroup() {
         if (game.time.now > radialShootingEnemyBulletTime && this.alive) {
           enemyBullet = radialShootingEnemyBullets.getFirstExists(false);
           if (enemyBullet) {
-            enemyBullet.reset(radialShootingEnemiesGroup.x, this.y - 200);
+            enemyBullet.reset(radialShootingEnemiesGroup.x, this.y - game.height * 0.28);
             enemyBullet.body.velocity.x = Math.cos(bulletVelocityX) * radialShootingEnemyBulletSpeed;
             enemyBullet.body.velocity.y = Math.sin(bulletVelocityY) * radialShootingEnemyBulletSpeed;
             bulletVelocityX++;
