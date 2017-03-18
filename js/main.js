@@ -45,26 +45,11 @@ var explosion;
 function preload() {
   game.load.image('starfield', 'assets/starfield.jpg');
   game.load.image('player', 'assets/spaceship.png');
-  game.load.image('bullet', 'assets/bullet.png');
-  game.load.image('playerLaserShot', 'assets/playerLaserShot.png');
-  game.load.image('noShootingEnemy', 'assets/noShootingEnemy.png');
-  game.load.image('shootingEnemy', 'assets/shootingEnemy.png');
-  game.load.image('shootingEnemyBullet', 'assets/shootingEnemyBullet.png');
-  game.load.image('radialShootingEnemy', 'assets/radialShootingEnemy.png');
-  game.load.image('radialShootingEnemyBullet', 'assets/radialShootingEnemyBullet.png');
-  game.load.image('circleShootingEnemy', 'assets/circleShootingEnemy.png');
-  game.load.image('circleShootingEnemyBullet', 'assets/circleShootingEnemyBullet.png');
   game.load.image('playAgainButton', 'assets/playAgain.png');
   game.load.spritesheet('explosion', 'assets/explosion.png');
-  game.load.audio('explosionSound', 'assets/explosion.mp3');
-  game.load.audio('laserShotSound', 'assets/laserShotSound.mp3');
-  game.load.audio('laserBeamSound', 'assets/laserBeamSound.mp3');
-  game.load.audio('weaponChangeSound', 'assets/weaponChangeSound.mp3');
-  game.load.audio('shotSystemOnlineSound', 'assets/shotSystemOnlineSound.mp3');
-  game.load.audio('laserSystemOnlineSound', 'assets/laserSystemOnlineSound.mp3');
-  game.load.audio('circleLaserShotSound', 'assets/circleLaserShotSound.mp3');
-  game.load.audio('gameOverNiceTrySound', 'assets/gameOverNiceTrySound.mp3');
-  game.load.audio('backgroundMusic', 'assets/backgroundMusic.mp3');
+  initBullets();
+  initEnemies();
+  initAudio();
 }
 
 function create() {
@@ -76,36 +61,10 @@ function create() {
   revivePlayer();
   cursors = game.input.keyboard.createCursorKeys();
 
-  bullets = game.add.group();
-  bullets.enableBody = true;
-  bullets.physicsBodyType = Phaser.Physics.ARCADE;
-  bullets.createMultiple(100, 'bullet');
-  bullets.setAll('anchor.x', 0.5);
-  bullets.setAll('anchor.y', 1);
-  bullets.setAll('outOfBoundsKill', true);
-  bullets.setAll('checkWorldBounds', true);
+  createPlayerBullets();
+  createPlayerLaser();
 
-  laserShots = game.add.group();
-  laserShots.enableBody = true;
-  laserShots.physicsBodyType = Phaser.Physics.ARCADE;
-  laserShots.createMultiple(100, 'playerLaserShot');
-  laserShots.setAll('anchor.x', 0.5);
-  laserShots.setAll('anchor.y', 1);
-  laserShots.setAll('outOfBoundsKill', true);
-  laserShots.setAll('checkWorldBounds', true);
-
-  laserBeamSound = game.add.audio('laserBeamSound');
-  laserBeamSound.volume -= 0.95;
-
-  currentFireType = fireType.BULLET;
-
-  noShootingEnemies = game.add.group();
-  shootingEnemies = game.add.group();
-  shootingEnemiesBullets = game.add.group();
-  radialShootingEnemies = game.add.group();
-  radialEnemiesBullets = game.add.group();
-  circleShootingEnemies = game.add.group();
-  circleEnemiesBullets = game.add.group();
+  createEnemyGroups();
 
   gameOver = game.add.text(game.world.centerX, game.world.centerY * 0.8, 'GAME OVER!', { font: '84px Arial', fill: '#fff' });
   gameOver.anchor.setTo(0.5, 0.5);
@@ -147,6 +106,84 @@ function create() {
   circleShootingWaveTimer.start();
 }
 
+function update() {
+  spacefield.tilePosition.y += 5;
+  playerControls();
+  if (fireButton.isDown && player.alive && currentFireType == fireType.BULLET) {
+    fireBullet();
+  } else if (fireButton.isDown && player.alive && currentFireType == fireType.LASER) {
+    if (!laserBeamSound.isPlaying) {
+      laserBeamSound.play();
+    }
+    fireLaser();
+  }
+  if (fireButton.isUp && player.alive && currentFireType == fireType.LASER) {
+    laserShots.callAll('kill');
+  }
+}
+
+function initBullets() {
+  game.load.image('bullet', 'assets/bullets/bullet.png');
+  game.load.image('playerLaserShot', 'assets/bullets/playerLaserShot.png');
+  game.load.image('shootingEnemyBullet', 'assets/bullets/shootingEnemyBullet.png');
+  game.load.image('radialShootingEnemyBullet', 'assets/bullets/radialShootingEnemyBullet.png');
+  game.load.image('circleShootingEnemyBullet', 'assets/bullets/circleShootingEnemyBullet.png');
+}
+
+function initEnemies() {
+  game.load.image('noShootingEnemy', 'assets/enemies/noShootingEnemy.png');
+  game.load.image('shootingEnemy', 'assets/enemies/shootingEnemy.png');
+  game.load.image('radialShootingEnemy', 'assets/enemies/radialShootingEnemy.png');
+  game.load.image('circleShootingEnemy', 'assets/enemies/circleShootingEnemy.png');
+}
+
+function initAudio() {
+  game.load.audio('explosionSound', 'assets/audio/explosion.mp3');
+  game.load.audio('laserShotSound', 'assets/audio/laserShotSound.mp3');
+  game.load.audio('laserBeamSound', 'assets/audio/laserBeamSound.mp3');
+  game.load.audio('weaponChangeSound', 'assets/audio/weaponChangeSound.mp3');
+  game.load.audio('shotSystemOnlineSound', 'assets/audio/shotSystemOnlineSound.mp3');
+  game.load.audio('laserSystemOnlineSound', 'assets/audio/laserSystemOnlineSound.mp3');
+  game.load.audio('circleLaserShotSound', 'assets/audio/circleLaserShotSound.mp3');
+  game.load.audio('gameOverNiceTrySound', 'assets/audio/gameOverNiceTrySound.mp3');
+  game.load.audio('backgroundMusic', 'assets/audio/backgroundMusic.mp3');
+}
+
+function createPlayerBullets() {
+  bullets = game.add.group();
+  bullets.enableBody = true;
+  bullets.physicsBodyType = Phaser.Physics.ARCADE;
+  bullets.createMultiple(100, 'bullet');
+  bullets.setAll('anchor.x', 0.5);
+  bullets.setAll('anchor.y', 1);
+  bullets.setAll('outOfBoundsKill', true);
+  bullets.setAll('checkWorldBounds', true);
+}
+
+function createPlayerLaser() {
+  laserShots = game.add.group();
+  laserShots.enableBody = true;
+  laserShots.physicsBodyType = Phaser.Physics.ARCADE;
+  laserShots.createMultiple(100, 'playerLaserShot');
+  laserShots.setAll('anchor.x', 0.5);
+  laserShots.setAll('anchor.y', 1);
+  laserShots.setAll('outOfBoundsKill', true);
+  laserShots.setAll('checkWorldBounds', true);
+
+  laserBeamSound = game.add.audio('laserBeamSound');
+  laserBeamSound.volume -= 0.95;
+}
+
+function createEnemyGroups() {
+  noShootingEnemies = game.add.group();
+  shootingEnemies = game.add.group();
+  shootingEnemiesBullets = game.add.group();
+  radialShootingEnemies = game.add.group();
+  radialEnemiesBullets = game.add.group();
+  circleShootingEnemies = game.add.group();
+  circleEnemiesBullets = game.add.group();
+}
+
 function systemTypeSound(sound) {
   if (shotSystemOnlineSound != null) {
     shotSystemOnlineSound.destroy();
@@ -181,7 +218,6 @@ function restartGame() {
   radialShootingWaveTimer.resume();
   circleShootingWaveTimer.resume();
   revivePlayer();
-  currentFireType = fireType.BULLET;
   initializeBackgroundMusic();
 }
 
@@ -197,28 +233,13 @@ function revivePlayer() {
   game.physics.enable(player, Phaser.Physics.ARCADE);
   player.body.setSize(10,10,35,50);
   player.body.reset(player.x, player.y)
+  currentFireType = fireType.BULLET;
 }
 
 function killAll(collection) {
   collection.forEach(function(group) {
     group.callAll('kill');
   });
-}
-
-function update() {
-  spacefield.tilePosition.y += 5;
-  playerControls();
-  if (fireButton.isDown && player.alive && currentFireType == fireType.BULLET) {
-    fireBullet();
-  } else if (fireButton.isDown && player.alive && currentFireType == fireType.LASER) {
-    if (!laserBeamSound.isPlaying) {
-      laserBeamSound.play();
-    }
-    fireLaser();
-  }
-  if (fireButton.isUp && player.alive && currentFireType == fireType.LASER) {
-    laserShots.callAll('kill');
-  }
 }
 
 function playerControls() {
