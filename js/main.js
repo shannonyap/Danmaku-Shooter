@@ -35,6 +35,8 @@ var radialShootingWaveTimer;
 var circleShootingWaveTimer;
 
 var backgroundMusic;
+var shotSystemOnlineSound;
+var laserSystemOnlineSound;
 
 var laserBeamSound;
 var circleLaserShot;
@@ -93,7 +95,7 @@ function create() {
   laserShots.setAll('checkWorldBounds', true);
 
   laserBeamSound = game.add.audio('laserBeamSound');
-  laserBeamSound.volume -= 0.91;
+  laserBeamSound.volume -= 0.95;
 
   currentFireType = fireType.BULLET;
 
@@ -146,12 +148,18 @@ function create() {
 }
 
 function systemTypeSound(sound) {
-  if (currentFireType == fireType.BULLET) {
-    var shotSystemOnlineSound = game.add.audio('shotSystemOnlineSound');
+  if (shotSystemOnlineSound != null) {
+    shotSystemOnlineSound.destroy();
+  }
+  if (laserSystemOnlineSound != null) {
+    laserSystemOnlineSound.destroy();
+  }
+  if (currentFireType == fireType.BULLET && laserSystemOnlineSound != null) {
+    shotSystemOnlineSound = game.add.audio('shotSystemOnlineSound');
     shotSystemOnlineSound.volume -= 0.8;
     shotSystemOnlineSound.play();
   } else {
-    var laserSystemOnlineSound = game.add.audio('laserSystemOnlineSound');
+    laserSystemOnlineSound = game.add.audio('laserSystemOnlineSound');
     laserSystemOnlineSound.volume -= 0.8;
     laserSystemOnlineSound.play();
   }
@@ -173,6 +181,7 @@ function restartGame() {
   radialShootingWaveTimer.resume();
   circleShootingWaveTimer.resume();
   revivePlayer();
+  currentFireType = fireType.BULLET;
   initializeBackgroundMusic();
 }
 
@@ -236,7 +245,7 @@ function playerControls() {
 function fireBullet() {
   if (game.time.now > bulletTime) {
     var laserShotSound = game.add.audio('laserShotSound');
-    laserShotSound.volume -= 0.91;
+    laserShotSound.volume -= 0.95;
     laserShotSound.play();
     var bulletCount = 5;
     while (bulletCount > 0) {
@@ -511,7 +520,7 @@ function collisionHandler(bullet, enemy) {
       enemy.health -= 5;
       bullet.height = (player.y - enemy.y) * 2.75;
     } else {
-      enemy.health -= 50;
+      enemy.health -= 10;
       bullet.kill();
     }
     enemy.tint = 0xff3655;
