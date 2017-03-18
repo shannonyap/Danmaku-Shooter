@@ -23,11 +23,16 @@ var playAgain;
 
 var noShootingEnemies;
 var shootingEnemies;
-var shootingEnemiesBullets;
 var radialShootingEnemies;
-var radialEnemiesBullets;
 var circleShootingEnemies;
+var spreadShootingEnemies;
+var enemyList = [noShootingEnemies, shootingEnemies, radialShootingEnemies, circleShootingEnemies];
+
+var shootingEnemiesBullets;
+var radialEnemiesBullets;
 var circleEnemiesBullets;
+var spreadShootingEnemiesBullets;
+var bulletList = [shootingEnemiesBullets, radialEnemiesBullets, circleEnemiesBullets];
 
 var noShootingWaveTimer;
 var shootingWaveTimer;
@@ -65,14 +70,10 @@ function create() {
   createPlayerLaser();
 
   createEnemyGroups();
+  createEnemyBullets();
 
-  gameOver = game.add.text(game.world.centerX, game.world.centerY * 0.8, 'GAME OVER!', { font: '84px Arial', fill: '#fff' });
-  gameOver.anchor.setTo(0.5, 0.5);
-  gameOver.visible = false;
-
-  playAgain = game.add.button(game.world.centerX, game.world.centerY * 1.2, 'playAgainButton', restartGame, this, 2, 1, 0);
-  playAgain.anchor.setTo(0.5, 0.5);
-  playAgain.visible = false;
+  createGameOverText();
+  createPlayAgainButton();
 
   fireButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
   changeWeaponButton = game.input.keyboard.addKey(Phaser.Keyboard.SHIFT);
@@ -88,7 +89,7 @@ function create() {
     weaponChangeSound.volume -= 0.91;
     weaponChangeSound.play();
   });
-
+/*
   noShootingWaveTimer = game.time.create(false);
   noShootingWaveTimer.loop(getRandomInt(3000, 7001), createNoShootingEnemyGroup, this);
   noShootingWaveTimer.start();
@@ -103,7 +104,7 @@ function create() {
 
   circleShootingWaveTimer = game.time.create(false);
   circleShootingWaveTimer.loop(getRandomInt(9000, 11001), createCircleShootingEnemyGroupWave, this);
-  circleShootingWaveTimer.start();
+  circleShootingWaveTimer.start();*/
 }
 
 function update() {
@@ -128,6 +129,7 @@ function initBullets() {
   game.load.image('shootingEnemyBullet', 'assets/bullets/shootingEnemyBullet.png');
   game.load.image('radialShootingEnemyBullet', 'assets/bullets/radialShootingEnemyBullet.png');
   game.load.image('circleShootingEnemyBullet', 'assets/bullets/circleShootingEnemyBullet.png');
+  game.load.image('spreadShootingEnemyBullet', 'assets/bullets/spreadShootingEnemyBullet.png');
 }
 
 function initEnemies() {
@@ -135,6 +137,7 @@ function initEnemies() {
   game.load.image('shootingEnemy', 'assets/enemies/shootingEnemy.png');
   game.load.image('radialShootingEnemy', 'assets/enemies/radialShootingEnemy.png');
   game.load.image('circleShootingEnemy', 'assets/enemies/circleShootingEnemy.png');
+  game.load.image('spreadShootingEnemy', 'assets/enemies/spreadShootingEnemy.png');
 }
 
 function initAudio() {
@@ -174,95 +177,6 @@ function createPlayerLaser() {
   laserBeamSound.volume -= 0.95;
 }
 
-function createEnemyGroups() {
-  noShootingEnemies = game.add.group();
-  shootingEnemies = game.add.group();
-  shootingEnemiesBullets = game.add.group();
-  radialShootingEnemies = game.add.group();
-  radialEnemiesBullets = game.add.group();
-  circleShootingEnemies = game.add.group();
-  circleEnemiesBullets = game.add.group();
-}
-
-function systemTypeSound(sound) {
-  if (shotSystemOnlineSound != null) {
-    shotSystemOnlineSound.destroy();
-  }
-  if (laserSystemOnlineSound != null) {
-    laserSystemOnlineSound.destroy();
-  }
-  if (currentFireType == fireType.BULLET && laserSystemOnlineSound != null) {
-    shotSystemOnlineSound = game.add.audio('shotSystemOnlineSound');
-    shotSystemOnlineSound.volume -= 0.8;
-    shotSystemOnlineSound.play();
-  } else {
-    laserSystemOnlineSound = game.add.audio('laserSystemOnlineSound');
-    laserSystemOnlineSound.volume -= 0.8;
-    laserSystemOnlineSound.play();
-  }
-}
-
-function restartGame() {
-  backgroundMusic.stop();
-  killAll(noShootingEnemies);
-  killAll(shootingEnemies);
-  killAll(shootingEnemiesBullets);
-  killAll(radialShootingEnemies);
-  killAll(radialEnemiesBullets);
-  killAll(circleShootingEnemies);
-  killAll(circleEnemiesBullets);
-  gameOver.visible = false;
-  playAgain.visible = false;
-  noShootingWaveTimer.resume();
-  shootingWaveTimer.resume();
-  radialShootingWaveTimer.resume();
-  circleShootingWaveTimer.resume();
-  revivePlayer();
-  initializeBackgroundMusic();
-}
-
-function initializeBackgroundMusic() {
-  backgroundMusic = game.add.audio('backgroundMusic');
-  backgroundMusic.loop = true;
-  backgroundMusic.volume -= 0.8;
-  backgroundMusic.play();
-}
-
-function revivePlayer() {
-  player = game.add.sprite(game.world.centerX, game.world.centerY + 250, 'player');
-  game.physics.enable(player, Phaser.Physics.ARCADE);
-  player.body.setSize(10,10,35,50);
-  player.body.reset(player.x, player.y)
-  currentFireType = fireType.BULLET;
-}
-
-function killAll(collection) {
-  collection.forEach(function(group) {
-    group.callAll('kill');
-  });
-}
-
-function playerControls() {
-  player.body.velocity.x = 0;
-  player.body.velocity.y = 0;
-
-  if (cursors.left.isDown && player.world.x > 0) {
-    player.body.velocity.x = -550;
-  }
-
-  if (cursors.right.isDown && player.world.x < game.width - player.width) {
-    player.body.velocity.x = 550;
-  }
-
-  if (cursors.up.isDown && player.world.y > 0) {
-    player.body.velocity.y = -550;
-  }
-
-  if (cursors.down.isDown && player.world.y < game.height - player.height) {
-    player.body.velocity.y = 550;
-  }
-}
-
 function fireBullet() {
   if (game.time.now > bulletTime) {
     var laserShotSound = game.add.audio('laserShotSound');
@@ -292,6 +206,114 @@ function fireLaser() {
       laserShot.body.velocity.y = -1200;
       laserTime = game.time.now + 50;
     }
+  }
+}
+
+function createEnemyGroups() {
+  for (var i = 0; i < enemyList.length; i++) {
+    enemyList[i] = game.add.group();
+  }
+}
+
+function createEnemyBullets() {
+  for (var i = 0; i < enemyList.length; i++) {
+    bulletList[i] = game.add.group();
+  }
+}
+
+function killAllEnemies() {
+  for (var i = 0; i < enemyList.length; i++) {
+    killAll(enemyList[i]);
+  }
+}
+
+function killAllEnemiesBullets() {
+  for (var i = 0; i < enemyList.length; i++) {
+    killAll(bulletList[i]);
+  }
+}
+
+function killAll(collection) {
+  collection.forEach(function(group) {
+    group.callAll('kill');
+  });
+}
+
+function restartGame() {
+  backgroundMusic.stop();
+  gameOver.visible = false;
+  playAgain.visible = false;
+  killAllEnemies();
+  killAllEnemiesBullets();
+  noShootingWaveTimer.resume();
+  shootingWaveTimer.resume();
+  radialShootingWaveTimer.resume();
+  circleShootingWaveTimer.resume();
+  revivePlayer();
+  initializeBackgroundMusic();
+}
+
+function initializeBackgroundMusic() {
+  backgroundMusic = game.add.audio('backgroundMusic');
+  backgroundMusic.loop = true;
+  backgroundMusic.volume -= 0.8;
+  backgroundMusic.play();
+}
+
+function systemTypeSound(sound) {
+  if (shotSystemOnlineSound != null) {
+    shotSystemOnlineSound.destroy();
+  }
+  if (laserSystemOnlineSound != null) {
+    laserSystemOnlineSound.destroy();
+  }
+  if (currentFireType == fireType.BULLET && laserSystemOnlineSound != null) {
+    shotSystemOnlineSound = game.add.audio('shotSystemOnlineSound');
+    shotSystemOnlineSound.volume -= 0.8;
+    shotSystemOnlineSound.play();
+  } else {
+    laserSystemOnlineSound = game.add.audio('laserSystemOnlineSound');
+    laserSystemOnlineSound.volume -= 0.8;
+    laserSystemOnlineSound.play();
+  }
+}
+
+function revivePlayer() {
+  player = game.add.sprite(game.world.centerX, game.world.centerY + 250, 'player');
+  game.physics.enable(player, Phaser.Physics.ARCADE);
+  player.body.setSize(10,10,35,50);
+  player.body.reset(player.x, player.y)
+  currentFireType = fireType.BULLET;
+}
+
+function createGameOverText() {
+  gameOver = game.add.text(game.world.centerX, game.world.centerY * 0.8, 'GAME OVER!', { font: '84px Arial', fill: '#fff' });
+  gameOver.anchor.setTo(0.5, 0.5);
+  gameOver.visible = false;
+
+}
+
+function createPlayAgainButton() {
+  playAgain = game.add.button(game.world.centerX, game.world.centerY * 1.2, 'playAgainButton', restartGame, this, 2, 1, 0);
+  playAgain.anchor.setTo(0.5, 0.5);
+  playAgain.visible = false;
+}
+
+function playerControls() {
+  player.body.velocity.x = 0;
+  player.body.velocity.y = 0;
+
+  if (cursors.left.isDown && player.world.x > 0) {
+    player.body.velocity.x = -550;
+  }
+  if (cursors.right.isDown && player.world.x < game.width - player.width) {
+    player.body.velocity.x = 550;
+  }
+  if (cursors.up.isDown && player.world.y > 0) {
+    player.body.velocity.y = -550;
+  }
+  if (cursors.down.isDown && player.world.y < game.height - player.height) {
+    player.body.velocity.y = 550;
   }
 }
 
@@ -325,7 +347,7 @@ function createNoShootingEnemyGroup() {
     }
   }
   noShootingEnemiesGroup.y = -game.height * 0.3;
-  noShootingEnemies.add(noShootingEnemiesGroup);
+  enemyList[0].add(noShootingEnemiesGroup);
 }
 
 function createShootingEnemyGroup() {
@@ -373,8 +395,8 @@ function createShootingEnemyGroup() {
   }
   shootingEnemiesGroup.x = getRandomInt(0, game.width);
   shootingEnemiesGroup.y = -game.height * 0.3;
-  shootingEnemies.add(shootingEnemiesGroup);
-  shootingEnemiesBullets.add(shootingEnemyBullets);
+  enemyList[1].add(shootingEnemiesGroup);
+  bulletList[0].add(shootingEnemyBullets);
 }
 
 function createRadialShootingEnemyGroup() {
@@ -430,8 +452,8 @@ function createRadialShootingEnemyGroup() {
     }
   }
   radialShootingEnemiesGroup.y = -game.height * 0.3;
-  radialShootingEnemies.add(radialShootingEnemiesGroup);
-  radialEnemiesBullets.add(radialShootingEnemyBullets);
+  enemyList[2].add(radialShootingEnemiesGroup);
+  enemyList[1].add(radialShootingEnemyBullets);
 }
 
 function createRadialShootingEnemyGroupWave() {
@@ -507,8 +529,8 @@ function createCircleShootingEnemyGroup(position) {
     }
   }
   circleShootingEnemiesGroup.y = -game.height * 0.3;
-  circleShootingEnemies.add(circleShootingEnemiesGroup);
-  circleEnemiesBullets.add(circleShootingEnemyBullets);
+  enemyList[3].add(circleShootingEnemiesGroup);
+  enemyList[2].add(circleShootingEnemyBullets);
 }
 
 function createCircleShootingEnemyGroupWave() {
@@ -561,5 +583,5 @@ function removeEnemy(enemy) {
 }
 
 function getRandomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
