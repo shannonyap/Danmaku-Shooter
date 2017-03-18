@@ -6,7 +6,17 @@ var cursors;
 
 var bullets;
 var bulletTime = 0;
+
+var laserShots;
+var laserTime = 0;
+
 var fireButton;
+var changeWeaponButton;
+var currentFireType;
+var fireType = {
+  BULLET: 1,
+  LASER: 2,
+};
 
 var gameOver;
 var playAgain;
@@ -32,6 +42,7 @@ function preload() {
   game.load.image('starfield', 'assets/starfield.jpg');
   game.load.image('player', 'assets/spaceship.png');
   game.load.image('bullet', 'assets/bullet.png');
+  game.load.image('playerLaserShot', 'assets/playerLaserShot.png');
   game.load.image('noShootingEnemy', 'assets/noShootingEnemy.png');
   game.load.image('shootingEnemy', 'assets/shootingEnemy.png');
   game.load.image('shootingEnemyBullet', 'assets/shootingEnemyBullet.png');
@@ -51,6 +62,7 @@ function create() {
   spacefield = game.add.tileSprite(0,0,window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio, 'starfield');
   revivePlayer();
   cursors = game.input.keyboard.createCursorKeys();
+
   bullets = game.add.group();
   bullets.enableBody = true;
   bullets.physicsBodyType = Phaser.Physics.ARCADE;
@@ -59,6 +71,17 @@ function create() {
   bullets.setAll('anchor.y', 1);
   bullets.setAll('outOfBoundsKill', true);
   bullets.setAll('checkWorldBounds', true);
+
+  laserShots = game.add.group();
+  laserShots.enableBody = true;
+  laserShots.physicsBodyType = Phaser.Physics.ARCADE;
+  laserShots.createMultiple(100, 'playerLaserShot');
+  laserShots.setAll('anchor.x', 0.5);
+  laserShots.setAll('anchor.y', 1);
+  laserShots.setAll('outOfBoundsKill', true);
+  laserShots.setAll('checkWorldBounds', true);
+
+  currentFireType = fireType.BULLET;
 
   noShootingEnemies = game.add.group();
   shootingEnemies = game.add.group();
@@ -77,6 +100,15 @@ function create() {
   playAgain.visible = false;
 
   fireButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+  changeWeaponButton = game.input.keyboard.addKey(Phaser.Keyboard.SHIFT);
+  changeWeaponButton.onDown.add(function(key) {
+    if (currentFireType == fireType.BULLET) {
+      currentFireType = fireType.LASER;
+    } else {
+      laserShots.callAll('kill');
+      currentFireType = fireType.BULLET;
+    }
+  });
 
   noShootingWaveTimer = game.time.create(false);
   noShootingWaveTimer.loop(getRandomInt(3000, 7001), createNoShootingEnemyGroup, this);
@@ -128,8 +160,13 @@ function killAll(collection) {
 function update() {
   spacefield.tilePosition.y += 5;
   playerControls();
-  if (fireButton.isDown && player.alive) {
+  if (fireButton.isDown && player.alive && currentFireType == fireType.BULLET) {
     fireBullet();
+  } else if (fireButton.isDown && player.alive && currentFireType == fireType.LASER) {
+    fireLaser();
+  }
+  if (fireButton.isUp && player.alive && currentFireType == fireType.LASER) {
+    laserShots.callAll('kill');
   }
 }
 
@@ -156,13 +193,31 @@ function playerControls() {
 
 function fireBullet() {
   if (game.time.now > bulletTime) {
-    bullet = bullets.getFirstExists(false);
-    if (bullet) {
-      var laserShotSound = game.add.audio('laserShotSound');
-      laserShotSound.play();
-      bullet.reset(player.x + player.width * 0.5, player.y);
-      bullet.body.velocity.y = -1200;
-      bulletTime = game.time.now + 100;
+    var laserShotSound = game.add.audio('laserShotSound');
+    laserShotSound.play();
+    var bulletCount = 5;
+    while (bulletCount > 0) {
+      bullet = bullets.getFirstExists(false);
+      if (bullet) {
+        bullet.reset(player.x + player.width * 0.8 * bulletCount / 5, player.y);
+        bullet.body.velocity.y = -1200;
+        bulletTime = game.time.now + 100;
+      }
+      bulletCount--;
+    }
+  }
+}
+
+function fireLaser() {
+  laserShot = laserShots.getFirstExists(false);
+  if (game.time.now > laserTime) {
+    if (laserShot) {
+      laserShots.callAll('kill');
+      laserShot.height = game.height;
+      laserShot.body.height = game.height;
+      laserShot.reset(player.x + laserShot.width / 2, player.y * 1.05);
+      laserShot.body.velocity.y = -1200;
+      laserTime = game.time.now + 50;
     }
   }
 }
@@ -189,8 +244,11 @@ function createNoShootingEnemyGroup() {
     enemy.body.velocity.y = 150;
     enemy.checkWorldBounds = true;
     enemy.events.onOutOfBounds.add(removeEnemy, this);
+    var originalTint = enemy.tint;
     enemy.update = function() {
+      enemy.tint = originalTint;
       game.physics.arcade.overlap(bullets, noShootingEnemiesGroup, collisionHandler, null, this);
+      game.physics.arcade.overlap(laserShots, noShootingEnemiesGroup, collisionHandler, null, this);
     }
   }
   noShootingEnemiesGroup.y = -game.height * 0.3;
@@ -223,9 +281,12 @@ function createShootingEnemyGroup() {
       shootingEnemyBullets.setAll('outOfBoundsKill', true);
       shootingEnemyBullets.setAll('checkWorldBounds', true);
 
+      var originalTint = enemy.tint;
       enemy.update = function() {
+        enemy.tint = originalTint;
         game.physics.arcade.overlap(shootingEnemyBullets, player, enemyHitsPlayer, null, this);
         game.physics.arcade.overlap(bullets, shootingEnemiesGroup, collisionHandler, null, this);
+        game.physics.arcade.overlap(laserShots, shootingEnemiesGroup, collisionHandler, null, this);
         if (game.time.now > shootingEnemyBulletTime && enemy.alive) {
           enemyBullet = shootingEnemyBullets.getFirstExists(false);
           if (enemyBullet) {
@@ -270,10 +331,13 @@ function createRadialShootingEnemyGroup() {
 
     var bulletVelocityX = -180;
     var bulletVelocityY = -180;
+    var originalTint = enemy.tint;
     enemy.update = function() {
+      enemy.tint = originalTint;
       this.angle += 1;
       game.physics.arcade.overlap(radialShootingEnemyBullets, player, enemyHitsPlayer, null, this);
       game.physics.arcade.overlap(bullets, radialShootingEnemiesGroup, collisionHandler, null, this);
+      game.physics.arcade.overlap(laserShots, radialShootingEnemiesGroup, collisionHandler, null, this);
       if (this.y - this.height >= game.height / 2 + this.height) {
         this.body.velocity.y = 0;
       }
@@ -335,9 +399,12 @@ function createCircleShootingEnemyGroup(position) {
       tween = animateRight;
       tween.start();
     }, this);
+    var originalTint = enemy.tint;
     enemy.update = function() {
+      enemy.tint = originalTint;
       game.physics.arcade.overlap(circleShootingEnemyBullets, player, enemyHitsPlayer, null, this);
       game.physics.arcade.overlap(bullets, circleShootingEnemiesGroup, collisionHandler, null, this);
+      game.physics.arcade.overlap(laserShots, circleShootingEnemiesGroup, collisionHandler, null, this);
       if (this.y - this.height >= game.height / 2) {
         this.body.velocity.y = 0;
       }
@@ -391,23 +458,22 @@ function enemyHitsPlayer(bullet, player) {
 }
 
 function collisionHandler(bullet, enemy) {
-  bullet.kill();
-  var originalTint = enemy.tint;
   if (enemy.health > 0) {
-    enemy.health -= 50;
+    if (bullet.key == "playerLaserShot") {
+      enemy.health -= 5;
+      bullet.height = (player.y - enemy.y) * 2.75;
+    } else {
+      enemy.health -= 50;
+      bullet.kill();
+    }
     enemy.tint = 0xff3655;
   } else if (enemy.health <= 0) {
-    var width = enemy.width;
-    var height = enemy.height;
     enemy.loadTexture('explosion', 0);
     explosion.play();
     setTimeout(function() {
       enemy.kill();
     }, (50));
   }
-  setTimeout(function() {
-    enemy.tint = originalTint;
-  }, (100));
 }
 
 function removeEnemy(enemy) {
