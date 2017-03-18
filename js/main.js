@@ -34,7 +34,9 @@ var shootingWaveTimer;
 var radialShootingWaveTimer;
 var circleShootingWaveTimer;
 
-var laserShotSound;
+var backgroundMusic;
+
+var laserBeamSound;
 var circleLaserShot;
 var explosion;
 
@@ -54,11 +56,20 @@ function preload() {
   game.load.spritesheet('explosion', 'assets/explosion.png');
   game.load.audio('explosionSound', 'assets/explosion.mp3');
   game.load.audio('laserShotSound', 'assets/laserShotSound.mp3');
+  game.load.audio('laserBeamSound', 'assets/laserBeamSound.mp3');
+  game.load.audio('weaponChangeSound', 'assets/weaponChangeSound.mp3');
+  game.load.audio('shotSystemOnlineSound', 'assets/shotSystemOnlineSound.mp3');
+  game.load.audio('laserSystemOnlineSound', 'assets/laserSystemOnlineSound.mp3');
   game.load.audio('circleLaserShotSound', 'assets/circleLaserShotSound.mp3');
+  game.load.audio('gameOverNiceTrySound', 'assets/gameOverNiceTrySound.mp3');
+  game.load.audio('backgroundMusic', 'assets/backgroundMusic.mp3');
 }
 
 function create() {
+  initializeBackgroundMusic();
+
   explosion = game.add.audio('explosionSound');
+  explosion.volume -= 0.91;
   spacefield = game.add.tileSprite(0,0,window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio, 'starfield');
   revivePlayer();
   cursors = game.input.keyboard.createCursorKeys();
@@ -81,6 +92,9 @@ function create() {
   laserShots.setAll('outOfBoundsKill', true);
   laserShots.setAll('checkWorldBounds', true);
 
+  laserBeamSound = game.add.audio('laserBeamSound');
+  laserBeamSound.volume -= 0.91;
+
   currentFireType = fireType.BULLET;
 
   noShootingEnemies = game.add.group();
@@ -95,7 +109,7 @@ function create() {
   gameOver.anchor.setTo(0.5, 0.5);
   gameOver.visible = false;
 
-  playAgain = game.add.button(game.world.centerX, game.world.centerY * 1.2, 'playAgainButton', actionOnClick, this, 2, 1, 0);
+  playAgain = game.add.button(game.world.centerX, game.world.centerY * 1.2, 'playAgainButton', restartGame, this, 2, 1, 0);
   playAgain.anchor.setTo(0.5, 0.5);
   playAgain.visible = false;
 
@@ -108,6 +122,10 @@ function create() {
       laserShots.callAll('kill');
       currentFireType = fireType.BULLET;
     }
+    var weaponChangeSound = game.add.audio('weaponChangeSound');
+    weaponChangeSound.onStop.add(systemTypeSound, this);
+    weaponChangeSound.volume -= 0.91;
+    weaponChangeSound.play();
   });
 
   noShootingWaveTimer = game.time.create(false);
@@ -127,7 +145,20 @@ function create() {
   circleShootingWaveTimer.start();
 }
 
-function actionOnClick() {
+function systemTypeSound(sound) {
+  if (currentFireType == fireType.BULLET) {
+    var shotSystemOnlineSound = game.add.audio('shotSystemOnlineSound');
+    shotSystemOnlineSound.volume -= 0.8;
+    shotSystemOnlineSound.play();
+  } else {
+    var laserSystemOnlineSound = game.add.audio('laserSystemOnlineSound');
+    laserSystemOnlineSound.volume -= 0.8;
+    laserSystemOnlineSound.play();
+  }
+}
+
+function restartGame() {
+  backgroundMusic.stop();
   killAll(noShootingEnemies);
   killAll(shootingEnemies);
   killAll(shootingEnemiesBullets);
@@ -142,6 +173,14 @@ function actionOnClick() {
   radialShootingWaveTimer.resume();
   circleShootingWaveTimer.resume();
   revivePlayer();
+  initializeBackgroundMusic();
+}
+
+function initializeBackgroundMusic() {
+  backgroundMusic = game.add.audio('backgroundMusic');
+  backgroundMusic.loop = true;
+  backgroundMusic.volume -= 0.8;
+  backgroundMusic.play();
 }
 
 function revivePlayer() {
@@ -163,6 +202,9 @@ function update() {
   if (fireButton.isDown && player.alive && currentFireType == fireType.BULLET) {
     fireBullet();
   } else if (fireButton.isDown && player.alive && currentFireType == fireType.LASER) {
+    if (!laserBeamSound.isPlaying) {
+      laserBeamSound.play();
+    }
     fireLaser();
   }
   if (fireButton.isUp && player.alive && currentFireType == fireType.LASER) {
@@ -194,6 +236,7 @@ function playerControls() {
 function fireBullet() {
   if (game.time.now > bulletTime) {
     var laserShotSound = game.add.audio('laserShotSound');
+    laserShotSound.volume -= 0.91;
     laserShotSound.play();
     var bulletCount = 5;
     while (bulletCount > 0) {
@@ -427,6 +470,7 @@ function createCircleShootingEnemyGroup(position) {
             j--;
           }
           var circleLaserShot = game.add.audio('circleLaserShotSound');
+          circleLaserShot.volume -= 0.94;
           circleLaserShot.play();
         }
       }
@@ -455,6 +499,10 @@ function enemyHitsPlayer(bullet, player) {
   circleShootingWaveTimer.pause();
   gameOver.visible = true;
   playAgain.visible = true;
+  var gameOverNiceTrySound = game.add.audio('gameOverNiceTrySound');
+  gameOverNiceTrySound.volume -= 0.85;
+  gameOverNiceTrySound.play();
+  backgroundMusic.fadeOut(3000);
 }
 
 function collisionHandler(bullet, enemy) {
