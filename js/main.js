@@ -229,18 +229,23 @@ function createEnemyBullets() {
 function killAllEnemies() {
   for (var i = 0; i < enemyList.length; i++) {
     killAll(enemyList[i]);
+    enemyList[i].destroy();
+    enemyList[i] = game.add.group();
   }
 }
 
 function killAllEnemiesBullets() {
   for (var i = 0; i < enemyList.length; i++) {
     killAll(bulletList[i]);
+    bulletList[i].destroy();
+    bulletList[i] = game.add.group();
   }
 }
 
 function killAll(collection) {
   collection.forEach(function(group) {
     group.callAll('kill');
+    group.destroy();
   });
 }
 
