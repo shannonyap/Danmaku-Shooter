@@ -19,6 +19,7 @@ var fireType = {
 };
 
 var hasEnteredSpacefield = false;
+var missionStartText;
 var gameOver;
 var playAgain;
 
@@ -78,7 +79,6 @@ function create() {
   createEnemyGroups();
   createEnemyBullets();
 
-  createGameOverText();
   createPlayAgainButton();
 
   fireButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
@@ -242,7 +242,7 @@ function killAll(collection) {
 
 function restartGame() {
   backgroundMusic.stop();
-  gameOver.visible = false;
+  gameOver.destroy();
   playAgain.visible = false;
   killAllEnemies();
   killAllEnemiesBullets();
@@ -266,11 +266,11 @@ function systemTypeSound(sound) {
   }
   if (currentFireType == fireType.BULLET && laserSystemOnlineSound != null) {
     shotSystemOnlineSound = game.add.audio('shotSystemOnlineSound');
-    shotSystemOnlineSound.volume -= 0.8;
+    shotSystemOnlineSound.volume -= 0.7;
     shotSystemOnlineSound.play();
   } else {
     laserSystemOnlineSound = game.add.audio('laserSystemOnlineSound');
-    laserSystemOnlineSound.volume -= 0.8;
+    laserSystemOnlineSound.volume -= 0.7;
     laserSystemOnlineSound.play();
   }
 }
@@ -281,21 +281,23 @@ function revivePlayer() {
   player.body.setSize(10,10,35,50);
   player.body.reset(player.x, player.y)
   currentFireType = fireType.BULLET;
-  var shipEnteringSpace = game.add.tween(player).to({ y: game.world.centerY + 250}, 1500);
+  createMissionStartText();
+  var shipEnteringSpace = game.add.tween(player).to({ y: game.world.centerY + 250}, 3000);
   shipEnteringSpace.start();
   setTimeout(function() {
     var missionSound = game.add.audio('missionSound');
-    missionSound.volume -= 0.8;
+    missionSound.volume -= 0.6;
     missionSound.onStop.add(function() {
       setTimeout(function() {
         var startSound = game.add.audio('startSound');
-        startSound.volume -= 0.8;
+        startSound.volume -= 0.6;
         startSound.play();
       }, (75));
     }, this);
     missionSound.play();
   }, (1000));
   shipEnteringSpace.onComplete.add(function() {
+    missionStartText.destroy();
     hasEnteredSpacefield = true;
     createEnemyWavesTimers();
   });
@@ -329,9 +331,28 @@ function createEnemyWavesTimers() {
 
 function createGameOverText() {
   gameOver = game.add.text(game.world.centerX, game.world.centerY * 0.8, 'GAME OVER!', { font: '84px Arial', fill: '#fff' });
+  var animateToTransparent = game.add.tween(gameOver).to({alpha: 0}, 300,Phaser.Easing.None, true);
+  var animateToOpaque = game.add.tween(gameOver).to({alpha: 1}, 300,Phaser.Easing.None, true);
+  animateToTransparent.chain(animateToOpaque);
+  animateToTransparent.start();
+  animateToTransparent.chainedTween.onComplete.add(function (enemy, tween) {
+    tween = animateToTransparent;
+    tween.start();
+  }, this);
   gameOver.anchor.setTo(0.5, 0.5);
-  gameOver.visible = false;
+}
 
+function createMissionStartText() {
+  missionStartText = game.add.text(game.world.centerX, game.world.centerY * 0.8, 'MISSION START', { font: '84px Arial', fill: '#fff' });
+  missionStartText.anchor.setTo(0.5, 0.5);
+  var animateToTransparent = game.add.tween(missionStartText).to({alpha: 0}, 300,Phaser.Easing.None, true);
+  var animateToOpaque = game.add.tween(missionStartText).to({alpha: 1}, 300,Phaser.Easing.None, true);
+  animateToTransparent.chain(animateToOpaque);
+  animateToTransparent.start();
+  animateToTransparent.chainedTween.onComplete.add(function (enemy, tween) {
+    tween = animateToTransparent;
+    tween.start();
+  }, this);
 }
 
 function createPlayAgainButton() {
@@ -752,8 +773,7 @@ function enemyHitsPlayer(bullet, player) {
   circleShootingWaveTimer.destroy();
   doubleCircleShootingWaveTimer.destroy();
   spreadShootingWaveTimer.destroy();
-
-  gameOver.visible = true;
+  createGameOverText();
   playAgain.visible = true;
   hasEnteredSpacefield = false;
   var gameOverNiceTrySound = game.add.audio('gameOverNiceTrySound');
