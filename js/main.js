@@ -18,6 +18,7 @@ var fireType = {
   LASER: 2,
 };
 
+var hasEnteredSpacefield = false;
 var gameOver;
 var playAgain;
 
@@ -42,6 +43,7 @@ var radialShootingWaveTimer;
 var circleShootingWaveTimer;
 var doubleCircleShootingWaveTimer;
 var spreadShootingWaveTimer;
+var timerList = [noShootingWaveTimer, shootingWaveTimer, radialShootingWaveTimer, circleShootingWaveTimer, doubleCircleShootingWaveTimer, spreadShootingWaveTimer]
 
 var backgroundMusic;
 var shotSystemOnlineSound;
@@ -93,45 +95,23 @@ function create() {
     weaponChangeSound.volume -= 0.91;
     weaponChangeSound.play();
   });
-
-  noShootingWaveTimer = game.time.create(false);
-  noShootingWaveTimer.loop(getRandomInt(3000, 7001), createNoShootingEnemyGroup, this);
-  noShootingWaveTimer.start();
-
-  shootingWaveTimer = game.time.create(false);
-  shootingWaveTimer.loop(getRandomInt(4000, 8001), createShootingEnemyGroup, this);
-  shootingWaveTimer.start();
-
-  radialShootingWaveTimer = game.time.create(false);
-  radialShootingWaveTimer.loop(getRandomInt(6000, 10001), createRadialShootingEnemyGroupWave, this);
-  radialShootingWaveTimer.start();
-
-  circleShootingWaveTimer = game.time.create(false);
-  circleShootingWaveTimer.loop(getRandomInt(9000, 11001), createCircleShootingEnemyGroupWave, this);
-  circleShootingWaveTimer.start();
-
-  doubleCircleShootingWaveTimer = game.time.create(false);
-  doubleCircleShootingWaveTimer.loop(getRandomInt(9000, 11001), createDoubleCircleShootingEnemyGroup, this);
-  doubleCircleShootingWaveTimer.start();
-
-  spreadShootingWaveTimer = game.time.create(false);
-  spreadShootingWaveTimer.loop(getRandomInt(3000, 6001), createSpreadShootingEnemyGroup, this);
-  spreadShootingWaveTimer.start();
 }
 
 function update() {
   spacefield.tilePosition.y += 5;
-  playerControls();
-  if (fireButton.isDown && player.alive && currentFireType == fireType.BULLET) {
-    fireBullet();
-  } else if (fireButton.isDown && player.alive && currentFireType == fireType.LASER) {
-    if (!laserBeamSound.isPlaying) {
-      laserBeamSound.play();
+  if (hasEnteredSpacefield) {
+    playerControls();
+    if (fireButton.isDown && player.alive && currentFireType == fireType.BULLET) {
+      fireBullet();
+    } else if (fireButton.isDown && player.alive && currentFireType == fireType.LASER) {
+      if (!laserBeamSound.isPlaying) {
+        laserBeamSound.play();
+      }
+      fireLaser();
     }
-    fireLaser();
-  }
-  if (fireButton.isUp && player.alive && currentFireType == fireType.LASER) {
-    laserShots.callAll('kill');
+    if (fireButton.isUp && player.alive && currentFireType == fireType.LASER) {
+      laserShots.callAll('kill');
+    }
   }
 }
 
@@ -162,6 +142,8 @@ function initAudio() {
   game.load.audio('shotSystemOnlineSound', 'assets/audio/shotSystemOnlineSound.mp3');
   game.load.audio('laserSystemOnlineSound', 'assets/audio/laserSystemOnlineSound.mp3');
   game.load.audio('circleLaserShotSound', 'assets/audio/circleLaserShotSound.mp3');
+  game.load.audio('missionSound', 'assets/audio/missionSound.mp3');
+  game.load.audio('startSound', 'assets/audio/startSound.mp3');
   game.load.audio('gameOverNiceTrySound', 'assets/audio/gameOverNiceTrySound.mp3');
   game.load.audio('backgroundMusic', 'assets/audio/backgroundMusic.mp3');
 }
@@ -264,12 +246,6 @@ function restartGame() {
   playAgain.visible = false;
   killAllEnemies();
   killAllEnemiesBullets();
-  noShootingWaveTimer.resume();
-  shootingWaveTimer.resume();
-  radialShootingWaveTimer.resume();
-  circleShootingWaveTimer.resume();
-  doubleCircleShootingWaveTimer.resume();
-  spreadShootingWaveTimer.resume();
   revivePlayer();
   initializeBackgroundMusic();
 }
@@ -300,11 +276,55 @@ function systemTypeSound(sound) {
 }
 
 function revivePlayer() {
-  player = game.add.sprite(game.world.centerX, game.world.centerY + 250, 'player');
+  player = game.add.sprite(game.world.centerX, game.height * 1.1, 'player');
   game.physics.enable(player, Phaser.Physics.ARCADE);
   player.body.setSize(10,10,35,50);
   player.body.reset(player.x, player.y)
   currentFireType = fireType.BULLET;
+  var shipEnteringSpace = game.add.tween(player).to({ y: game.world.centerY + 250}, 1500);
+  shipEnteringSpace.start();
+  setTimeout(function() {
+    var missionSound = game.add.audio('missionSound');
+    missionSound.volume -= 0.8;
+    missionSound.onStop.add(function() {
+      setTimeout(function() {
+        var startSound = game.add.audio('startSound');
+        startSound.volume -= 0.8;
+        startSound.play();
+      }, (75));
+    }, this);
+    missionSound.play();
+  }, (1000));
+  shipEnteringSpace.onComplete.add(function() {
+    hasEnteredSpacefield = true;
+    createEnemyWavesTimers();
+  });
+}
+
+function createEnemyWavesTimers() {
+  noShootingWaveTimer = game.time.create(false);
+  noShootingWaveTimer.loop(getRandomInt(3000, 7001), createNoShootingEnemyGroup, this);
+  noShootingWaveTimer.start();
+
+  shootingWaveTimer = game.time.create(false);
+  shootingWaveTimer.loop(getRandomInt(4000, 8001), createShootingEnemyGroup, this);
+  shootingWaveTimer.start();
+
+  radialShootingWaveTimer = game.time.create(false);
+  radialShootingWaveTimer.loop(getRandomInt(6000, 10001), createRadialShootingEnemyGroupWave, this);
+  radialShootingWaveTimer.start();
+
+  circleShootingWaveTimer = game.time.create(false);
+  circleShootingWaveTimer.loop(getRandomInt(9000, 11001), createCircleShootingEnemyGroupWave, this);
+  circleShootingWaveTimer.start();
+
+  doubleCircleShootingWaveTimer = game.time.create(false);
+  doubleCircleShootingWaveTimer.loop(getRandomInt(9000, 11001), createDoubleCircleShootingEnemyGroup, this);
+  doubleCircleShootingWaveTimer.start();
+
+  spreadShootingWaveTimer = game.time.create(false);
+  spreadShootingWaveTimer.loop(getRandomInt(3000, 6001), createSpreadShootingEnemyGroup, this);
+  spreadShootingWaveTimer.start();
 }
 
 function createGameOverText() {
@@ -385,13 +405,13 @@ function createShootingEnemyGroup() {
       enemy.events.onOutOfBounds.add(removeEnemy, this);
       enemy.health = 75;
       //  Set up firing
-      var shootingEnemyBulletSpeed = 400;
+      var shootingEnemyBulletSpeed = 270;
       var firingDelay = 1000;
       var shootingEnemyBulletTime = 0;
       var shootingEnemyBullets = game.add.group();
       shootingEnemyBullets.enableBody = true;
       shootingEnemyBullets.physicsBodyType = Phaser.Physics.ARCADE;
-      shootingEnemyBullets.createMultiple(3, 'shootingEnemyBullet');
+      shootingEnemyBullets.createMultiple(10, 'shootingEnemyBullet');
       shootingEnemyBullets.setAll('anchor.x', 0.5);
       shootingEnemyBullets.setAll('anchor.y', 1);
       shootingEnemyBullets.setAll('outOfBoundsKill', true);
@@ -433,13 +453,13 @@ function createRadialShootingEnemyGroup() {
     enemy.events.onOutOfBounds.add(removeEnemy, this);
     enemy.health = 100;
     //  Set up firing
-    var radialShootingEnemyBulletSpeed = 300;
+    var radialShootingEnemyBulletSpeed = 200;
     var firingDelay = 50;
     var radialShootingEnemyBulletTime = 0;
     var radialShootingEnemyBullets = game.add.group();
     radialShootingEnemyBullets.enableBody = true;
     radialShootingEnemyBullets.physicsBodyType = Phaser.Physics.ARCADE;
-    radialShootingEnemyBullets.createMultiple(35, 'radialShootingEnemyBullet');
+    radialShootingEnemyBullets.createMultiple(60, 'radialShootingEnemyBullet');
     radialShootingEnemyBullets.setAll('anchor.x', 0.5);
     radialShootingEnemyBullets.setAll('anchor.y', 1);
     radialShootingEnemyBullets.setAll('outOfBoundsKill', true);
@@ -495,7 +515,7 @@ function createCircleShootingEnemyGroup(position) {
     enemy.events.onOutOfBounds.add(removeEnemy, this);
     enemy.health = 150;
     //  Set up firing
-    var circleShootingEnemyBulletSpeed = 300;
+    var circleShootingEnemyBulletSpeed = 225;
     var firingDelay = 3000;
     var circleShootingEnemyBulletTime = 0;
     var circleShootingEnemyBullets = game.add.group();
@@ -571,13 +591,13 @@ function createDoubleCircleShootingEnemyGroup() {
     enemy.events.onOutOfBounds.add(removeEnemy, this);
     enemy.health = 200;
     //  Set up firing
-    var doubleCircleShootingEnemyBulletSpeed = 300;
+    var doubleCircleShootingEnemyBulletSpeed = 210;
     var firingDelay = 2500;
     var doubleCircleShootingEnemyBulletTime = 0;
     var doubleCircleShootingEnemyBullets = game.add.group();
     doubleCircleShootingEnemyBullets.enableBody = true;
     doubleCircleShootingEnemyBullets.physicsBodyType = Phaser.Physics.ARCADE;
-    doubleCircleShootingEnemyBullets.createMultiple(70, 'doubleCircleShootingEnemyBullet');
+    doubleCircleShootingEnemyBullets.createMultiple(80, 'doubleCircleShootingEnemyBullet');
     doubleCircleShootingEnemyBullets.setAll('anchor.x', 0.5);
     doubleCircleShootingEnemyBullets.setAll('anchor.y', 1);
     doubleCircleShootingEnemyBullets.setAll('outOfBoundsKill', true);
@@ -726,14 +746,16 @@ function enemyHitsPlayer(bullet, player) {
   setTimeout(function() {
     player.kill();
   }, (50));
-  noShootingWaveTimer.pause();
-  shootingWaveTimer.pause();
-  radialShootingWaveTimer.pause();
-  circleShootingWaveTimer.pause();
-  doubleCircleShootingWaveTimer.pause();
-  spreadShootingWaveTimer.pause();
+  noShootingWaveTimer.destroy();
+  shootingWaveTimer.destroy();
+  radialShootingWaveTimer.destroy();
+  circleShootingWaveTimer.destroy();
+  doubleCircleShootingWaveTimer.destroy();
+  spreadShootingWaveTimer.destroy();
+
   gameOver.visible = true;
   playAgain.visible = true;
+  hasEnteredSpacefield = false;
   var gameOverNiceTrySound = game.add.audio('gameOverNiceTrySound');
   gameOverNiceTrySound.volume -= 0.85;
   gameOverNiceTrySound.play();
