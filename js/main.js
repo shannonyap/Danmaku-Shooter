@@ -25,19 +25,22 @@ var noShootingEnemies;
 var shootingEnemies;
 var radialShootingEnemies;
 var circleShootingEnemies;
+var doubleCircleShootingEnemies;
 var spreadShootingEnemies;
-var enemyList = [noShootingEnemies, shootingEnemies, radialShootingEnemies, circleShootingEnemies, spreadShootingEnemies];
+var enemyList = [noShootingEnemies, shootingEnemies, radialShootingEnemies, circleShootingEnemies, doubleCircleShootingEnemies, spreadShootingEnemies];
 
 var shootingEnemiesBullets;
 var radialEnemiesBullets;
 var circleEnemiesBullets;
+var doubleCircleShootingEnemiesBullets;
 var spreadShootingEnemiesBullets;
-var bulletList = [shootingEnemiesBullets, radialEnemiesBullets, circleEnemiesBullets, spreadShootingEnemiesBullets];
+var bulletList = [shootingEnemiesBullets, radialEnemiesBullets, circleEnemiesBullets, doubleCircleShootingEnemiesBullets, spreadShootingEnemiesBullets];
 
 var noShootingWaveTimer;
 var shootingWaveTimer;
 var radialShootingWaveTimer;
 var circleShootingWaveTimer;
+var doubleCircleShootingWaveTimer;
 var spreadShootingWaveTimer;
 
 var backgroundMusic;
@@ -107,6 +110,10 @@ function create() {
   circleShootingWaveTimer.loop(getRandomInt(9000, 11001), createCircleShootingEnemyGroupWave, this);
   circleShootingWaveTimer.start();
 
+  doubleCircleShootingWaveTimer = game.time.create(false);
+  doubleCircleShootingWaveTimer.loop(getRandomInt(9000, 11001), createDoubleCircleShootingEnemyGroup, this);
+  doubleCircleShootingWaveTimer.start();
+
   spreadShootingWaveTimer = game.time.create(false);
   spreadShootingWaveTimer.loop(getRandomInt(3000, 6001), createSpreadShootingEnemyGroup, this);
   spreadShootingWaveTimer.start();
@@ -134,6 +141,7 @@ function initBullets() {
   game.load.image('shootingEnemyBullet', 'assets/bullets/shootingEnemyBullet.png');
   game.load.image('radialShootingEnemyBullet', 'assets/bullets/radialShootingEnemyBullet.png');
   game.load.image('circleShootingEnemyBullet', 'assets/bullets/circleShootingEnemyBullet.png');
+  game.load.image('doubleCircleShootingEnemyBullet', 'assets/bullets/doubleCircleShootingEnemyBullet.png');
   game.load.image('spreadShootingEnemyBullet', 'assets/bullets/spreadShootingEnemyBullet.png');
 }
 
@@ -142,6 +150,7 @@ function initEnemies() {
   game.load.image('shootingEnemy', 'assets/enemies/shootingEnemy.png');
   game.load.image('radialShootingEnemy', 'assets/enemies/radialShootingEnemy.png');
   game.load.image('circleShootingEnemy', 'assets/enemies/circleShootingEnemy.png');
+  game.load.image('doubleCircleShootingEnemy', 'assets/enemies/doubleCircleShootingEnemy.png');
   game.load.image('spreadShootingEnemy', 'assets/enemies/spreadShootingEnemy.png');
 }
 
@@ -259,6 +268,7 @@ function restartGame() {
   shootingWaveTimer.resume();
   radialShootingWaveTimer.resume();
   circleShootingWaveTimer.resume();
+  doubleCircleShootingWaveTimer.resume();
   spreadShootingWaveTimer.resume();
   revivePlayer();
   initializeBackgroundMusic();
@@ -549,6 +559,91 @@ function createCircleShootingEnemyGroupWave() {
   createCircleShootingEnemyGroup(game.width * 0.6);
 }
 
+function createDoubleCircleShootingEnemyGroup() {
+  var doubleCircleShootingEnemiesGroup = game.add.group();
+  doubleCircleShootingEnemiesGroup.enableBody = true;
+  doubleCircleShootingEnemiesGroup.physicsBodyType = Phaser.Physics.ARCADE;
+  doubleCircleShootingEnemiesGroup.x = getRandomInt(0, game.width);
+  for (var i = 0; i < 1; i++) {
+    var enemy = doubleCircleShootingEnemiesGroup.create(0, 50, 'doubleCircleShootingEnemy');
+    enemy.anchor.setTo(0.5, 0.5);
+    enemy.checkWorldBounds = true;
+    enemy.events.onOutOfBounds.add(removeEnemy, this);
+    enemy.health = 200;
+    //  Set up firing
+    var doubleCircleShootingEnemyBulletSpeed = 300;
+    var firingDelay = 2500;
+    var doubleCircleShootingEnemyBulletTime = 0;
+    var doubleCircleShootingEnemyBullets = game.add.group();
+    doubleCircleShootingEnemyBullets.enableBody = true;
+    doubleCircleShootingEnemyBullets.physicsBodyType = Phaser.Physics.ARCADE;
+    doubleCircleShootingEnemyBullets.createMultiple(70, 'doubleCircleShootingEnemyBullet');
+    doubleCircleShootingEnemyBullets.setAll('anchor.x', 0.5);
+    doubleCircleShootingEnemyBullets.setAll('anchor.y', 1);
+    doubleCircleShootingEnemyBullets.setAll('outOfBoundsKill', true);
+    doubleCircleShootingEnemyBullets.setAll('checkWorldBounds', true);
+
+    var animateBottomLeft = game.add.tween(doubleCircleShootingEnemiesGroup).to({ x: game.width * 0.2, y: game.height * 0.8}, 3500);
+    var animateTopLeft = game.add.tween(doubleCircleShootingEnemiesGroup).to({ y: game.height * 0.2}, 3500);
+    var animateTopRight = game.add.tween(doubleCircleShootingEnemiesGroup).to({ x:game.width * 0.8}, 3500);
+    var animateBottomRight = game.add.tween(doubleCircleShootingEnemiesGroup).to({ y: game.height * 0.8}, 3500);
+    animateBottomLeft.start();
+    animateBottomLeft.onComplete.add(function(enemy, tween) {
+      tween = animateTopLeft;
+      tween.start();
+    }, this);
+    animateTopLeft.onComplete.add(function(enemy, tween) {
+      tween = animateTopRight;
+      tween.start();
+    }, this);
+    animateTopRight.onComplete.add(function(enemy, tween) {
+      tween = animateBottomRight;
+      tween.start();
+    }, this);
+    animateBottomRight.onComplete.add(function(enemy, tween) {
+      tween = animateBottomLeft;
+      tween.start();
+    }, this);
+
+    var originalTint = enemy.tint;
+    enemy.update = function() {
+      this.angle++;
+      enemy.tint = originalTint;
+      game.physics.arcade.overlap(doubleCircleShootingEnemyBullets, player, enemyHitsPlayer, null, this);
+      game.physics.arcade.overlap(bullets, doubleCircleShootingEnemiesGroup, collisionHandler, null, this);
+      game.physics.arcade.overlap(laserShots, doubleCircleShootingEnemiesGroup, collisionHandler, null, this);
+      if (this.y - this.height >= game.height / 2) {
+        this.body.velocity.y = 0;
+      }
+      if (this.body.velocity.y == 0) {
+        if (game.time.now > doubleCircleShootingEnemyBulletTime && this.alive) {
+          for (var number = 1; number >= 0.2; number-= 0.4) {
+          var amount, start, step, i, angle, speed;
+          amount = 15;
+          start = Math.PI * -1;
+          step = Math.PI / amount * 2;
+          j = amount;
+          while (j > 0) {
+            enemyBullet = doubleCircleShootingEnemyBullets.getFirstExists(false);
+            if (enemyBullet) {
+              enemyBullet.reset(doubleCircleShootingEnemiesGroup.x + 10, doubleCircleShootingEnemiesGroup.y + this.height);
+              var angle = start + j * step;
+              enemyBullet.body.velocity.x = Math.cos(angle) * doubleCircleShootingEnemyBulletSpeed * number;
+              enemyBullet.body.velocity.y = Math.sin(angle) * doubleCircleShootingEnemyBulletSpeed * number;
+              doubleCircleShootingEnemyBulletTime = game.time.now + firingDelay;
+            }
+            j--;
+          }
+          }
+        }
+      }
+    }
+  }
+  doubleCircleShootingEnemiesGroup.y = -game.height * 0.3;
+  enemyList[4].add(doubleCircleShootingEnemiesGroup);
+  enemyList[3].add(doubleCircleShootingEnemyBullets);
+}
+
 function createSpreadShootingEnemyGroup() {
   var spreadShootingEnemiesGroup = game.add.group();
   spreadShootingEnemiesGroup.enableBody = true;
@@ -620,8 +715,8 @@ function createSpreadShootingEnemyGroup() {
       }
   }
   spreadShootingEnemiesGroup.y = -game.height * 0.3;
-  enemyList[4].add(spreadShootingEnemiesGroup);
-  bulletList[3].add(spreadShootingEnemyBullets);
+  enemyList[5].add(spreadShootingEnemiesGroup);
+  bulletList[4].add(spreadShootingEnemyBullets);
 }
 
 function enemyHitsPlayer(bullet, player) {
@@ -635,6 +730,7 @@ function enemyHitsPlayer(bullet, player) {
   shootingWaveTimer.pause();
   radialShootingWaveTimer.pause();
   circleShootingWaveTimer.pause();
+  doubleCircleShootingWaveTimer.pause();
   spreadShootingWaveTimer.pause();
   gameOver.visible = true;
   playAgain.visible = true;
