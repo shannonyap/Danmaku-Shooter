@@ -15,7 +15,6 @@ MainMenu.prototype = {
 
   create: function(game) {
     $(document).octoberLeaves('start');
-    console.log("EFDS: " + mainMenuBackgroundMusic);
     if (mainMenuBackgroundMusic == null) {
       mainMenuBackgroundMusic = game.add.audio('mainMenuBackgroundMusic');
       mainMenuBackgroundMusic.play();
@@ -25,7 +24,9 @@ MainMenu.prototype = {
       }, this);
     }
     var mainMenuBackground = this.game.add.tileSprite(0, 0, window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio, "mainMenuBackground");
-    mainMenuBackground.scale = {x:1.125, y:0.72};
+    if (this.game.width <= 1440 && this.game.height <= 730) {
+      mainMenuBackground.scale = {x:1.125, y:0.72};
+    }
     Phaser.Canvas.setSmoothingEnabled(this.game.context, false);
 
     var gameStartButton = this.game.add.button(this.game.width * 0.25, this.game.world.centerY * 0.2, 'gameStart', this.startGame, this, 2, 1, 0);
