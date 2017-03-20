@@ -12,8 +12,8 @@ Controls.prototype = {
 
   create: function(game) {
     var controlsBackground = this.game.add.tileSprite(0, 0, window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio, "controlsBackground");
-  //  controlsBackground.scale = {x:window.innerWidth * window.devicePixelRatio / 5100 + 0.6, y:0.5};
-  //  Phaser.Canvas.setSmoothingEnabled(this.game.context, false);
+    controlsBackground.scale = {x: this.game.width / 2549, y: this.game.height/ 1462};
+    Phaser.Canvas.setSmoothingEnabled(this.game.context, false);
     var arrowKeys = game.add.sprite(this.game.width * 0.2, this.game.height * 0.3, 'arrowKeys');
     arrowKeys.anchor.setTo(0.5, 0.5);
     var spacebarKey = game.add.sprite(this.game.width * 0.2, arrowKeys.y + arrowKeys.height, 'spacebarKey');
