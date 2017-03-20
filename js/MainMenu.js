@@ -1,4 +1,5 @@
 var MainMenu = function(game) {
+  $(document).octoberLeaves('start')
 }
 
 MainMenu.prototype = {
@@ -30,6 +31,7 @@ MainMenu.prototype = {
   },
 
   startGame: function() {
+    $(document).octoberLeaves('stop')
     this.state.start('MainGame');
   },
 
