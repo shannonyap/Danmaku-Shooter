@@ -15,6 +15,7 @@ MainMenu.prototype = {
 
   create: function(game) {
     $(document).octoberLeaves('start');
+    console.log("EFDS: " + mainMenuBackgroundMusic);
     if (mainMenuBackgroundMusic == null) {
       mainMenuBackgroundMusic = game.add.audio('mainMenuBackgroundMusic');
       mainMenuBackgroundMusic.play();
@@ -46,6 +47,7 @@ MainMenu.prototype = {
     if (mainMenuBackgroundMusic.isPlaying) {
       mainMenuBackgroundMusic.pause();
       mainMenuBackgroundMusic.destroy();
+      mainMenuBackgroundMusic = null;
     }
     this.state.start('MainGame');
   },
