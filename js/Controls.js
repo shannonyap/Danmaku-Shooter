@@ -3,7 +3,7 @@ var Controls = function(game) {
 
 Controls.prototype = {
   preload: function(game) {
-    this.game.load.image('controlsBackground', 'assets/controls/controlsBackground.png');
+    this.game.load.image('controlsBackground', 'assets/controls/controlsBackground.jpg');
     this.game.load.image('arrowKeys', 'assets/controls/arrowKeys.png');
     this.game.load.image('spacebarKey', 'assets/controls/spacebarKey.png');
     this.game.load.image('shiftKey', 'assets/controls/shiftKey.png');

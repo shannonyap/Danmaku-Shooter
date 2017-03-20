@@ -3,7 +3,7 @@ var MainMenu = function(game) {
 
 MainMenu.prototype = {
   preload: function(game) {
-    this.game.load.image('mainMenuBackground', 'assets/mainMenu/mainMenuBackground.png');
+    this.game.load.image('mainMenuBackground', 'assets/mainMenu/mainMenuBackground.jpg');
     this.game.load.image('gameStart', 'assets/mainMenu/gameStart.png');
     this.game.load.image('gameStartHover', 'assets/mainMenu/gameStartHover.png');
     this.game.load.image('controls', 'assets/mainMenu/controls.png');
