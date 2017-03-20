@@ -1,5 +1,6 @@
+var mainMenuBackgroundMusic;
+
 var MainMenu = function(game) {
-  $(document).octoberLeaves('start')
 }
 
 MainMenu.prototype = {
@@ -9,9 +10,19 @@ MainMenu.prototype = {
     this.game.load.image('gameStartHover', 'assets/mainMenu/gameStartHover.png');
     this.game.load.image('controls', 'assets/mainMenu/controls.png');
     this.game.load.image('controlsHover', 'assets/mainMenu/controlsHover.png');
+    this.game.load.audio('mainMenuBackgroundMusic', 'assets/mainMenu/audio/mainMenuBackgroundMusic.mp3');
   },
 
   create: function(game) {
+    $(document).octoberLeaves('start');
+    if (mainMenuBackgroundMusic == null) {
+      mainMenuBackgroundMusic = game.add.audio('mainMenuBackgroundMusic');
+      mainMenuBackgroundMusic.play();
+      mainMenuBackgroundMusic.volume -= 0.7;
+      mainMenuBackgroundMusic.onStop.add(function() {
+        mainMenuBackgroundMusic.play();
+      }, this);
+    }
     var mainMenuBackground = this.game.add.tileSprite(0, 0, window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio, "mainMenuBackground");
     mainMenuBackground.scale = {x:1.125, y:0.72};
     Phaser.Canvas.setSmoothingEnabled(this.game.context, false);
@@ -31,7 +42,11 @@ MainMenu.prototype = {
   },
 
   startGame: function() {
-    $(document).octoberLeaves('stop')
+    $(document).octoberLeaves('stop');
+    if (mainMenuBackgroundMusic.isPlaying) {
+      mainMenuBackgroundMusic.pause();
+      mainMenuBackgroundMusic.destroy();
+    }
     this.state.start('MainGame');
   },
 
