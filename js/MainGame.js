@@ -1,5 +1,7 @@
 var spacefield;
 var player;
+var bulletPodLeft;
+var bulletPodRight;
 var cursors;
 
 var bullets;
@@ -63,6 +65,7 @@ MainGame.prototype = {
   preload: function() {
     this.game.load.image('starfield', 'assets/starfield.jpg');
     this.game.load.image('player', 'assets/spaceship.png');
+    this.game.load.image('bulletPods', 'assets/bulletPods.png');
     this.game.load.image('playAgainButton', 'assets/playAgain.png');
     this.game.load.image('returnToMainMenu', 'assets/returnToMainMenu.png');
     this.game.load.spritesheet('explosion', 'assets/explosion.png');
@@ -160,7 +163,7 @@ MainGame.prototype = {
     bullets = this.game.add.group();
     bullets.enableBody = true;
     bullets.physicsBodyType = Phaser.Physics.ARCADE;
-    bullets.createMultiple(35, 'bullet');
+    bullets.createMultiple(100, 'bullet');
     bullets.setAll('anchor.x', 0.5);
     bullets.setAll('anchor.y', 1);
     bullets.setAll('outOfBoundsKill', true);
@@ -186,15 +189,21 @@ MainGame.prototype = {
       var laserShotSound = this.game.add.audio('laserShotSound');
       laserShotSound.volume -= 0.95;
       laserShotSound.play();
-      var bulletCount = 5;
-      while (bulletCount > 0) {
-        bullet = bullets.getFirstExists(false);
-        if (bullet) {
-          bullet.reset(player.x + player.width * 0.8 * bulletCount / 5, player.y);
-          bullet.body.velocity.y = -1200;
-          bulletTime = this.game.time.now + 100;
+      for (var bulletWave = -0.65; bulletWave <= 0.65; bulletWave+= 0.65) {
+        var bulletCount = 4;
+        while (bulletCount > 0) {
+          bullet = bullets.getFirstExists(false);
+          if (bullet) {
+            if (bulletWave != 0) {
+              bullet.reset(player.x + player.width * 0.45 * bulletCount / 4 + player.width * bulletWave - player.width * 0.3, player.y * 1.025);
+            } else {
+              bullet.reset(player.x + player.width * 0.45 * bulletCount / 4 + player.width * bulletWave - player.width * 0.3, player.y * 0.95);
+            }
+            bullet.body.velocity.y = -1200;
+            bulletTime = this.game.time.now + 100;
+          }
+          bulletCount--;
         }
-        bulletCount--;
       }
     }
   },
@@ -206,7 +215,7 @@ MainGame.prototype = {
         laserShots.callAll('kill');
         laserShot.height = this.game.height;
         laserShot.body.height = this.game.height;
-        laserShot.reset(player.x + laserShot.width / 2, player.y * 1.05);
+        laserShot.reset(player.x, player.y * 0.95);
         laserShot.body.velocity.y = -1200;
         laserTime = this.game.time.now + 50;
       }
@@ -299,12 +308,28 @@ MainGame.prototype = {
   revivePlayer: function() {
     player = this.game.add.sprite(this.game.world.centerX, this.game.height * 1.1, 'player');
     this.game.physics.enable(player, Phaser.Physics.ARCADE);
+    player.anchor.setTo(0.5, 0.5);
     player.body.setSize(10,10,35,50);
-    player.body.reset(player.x, player.y)
+    player.body.reset(player.x, player.y);
     currentFireType = fireType.BULLET;
+
+    bulletPodLeft = this.game.add.sprite(player.x - player.width * 0.6, player.y, 'bulletPods');
+    this.game.physics.enable(bulletPodLeft, Phaser.Physics.ARCADE);
+    bulletPodLeft.anchor.setTo(0.5, 0.5);
+//    bulletPodLeft.body.reset(player.x, player.y);
+
+    bulletPodRight = this.game.add.sprite(player.x + player.width * 0.6, player.y, 'bulletPods');
+    this.game.physics.enable(bulletPodRight, Phaser.Physics.ARCADE);
+    bulletPodRight.anchor.setTo(0.5, 0.5);
+  //  bulletPodRight.body.reset(player.x, player.y);
+
     this.createMissionStartText();
     var shipEnteringSpace = this.game.add.tween(player).to({ y: this.game.world.centerY + 250}, 3000);
     shipEnteringSpace.start();
+    var bulletPodLeftEnteringSpace = this.game.add.tween(bulletPodLeft).to({ y: this.game.world.centerY + 275}, 3000);
+    bulletPodLeftEnteringSpace.start();
+    var bulletPodRightEnteringSpace = this.game.add.tween(bulletPodRight).to({ y: this.game.world.centerY + 275}, 3000);
+    bulletPodRightEnteringSpace.start();
     setTimeout(function() {
       var missionSound = currGame.game.add.audio('missionSound');
       missionSound.volume -= 0.6;
@@ -391,18 +416,30 @@ MainGame.prototype = {
   playerControls: function() {
     player.body.velocity.x = 0;
     player.body.velocity.y = 0;
+    bulletPodLeft.body.velocity.x = 0;
+    bulletPodLeft.body.velocity.y = 0;
+    bulletPodRight.body.velocity.x = 0;
+    bulletPodRight.body.velocity.y = 0;
 
     if (cursors.left.isDown && player.world.x > 0) {
-      player.body.velocity.x = -550;
+      player.body.velocity.x = -this.game.width * 0.5;
+      bulletPodLeft.body.velocity.x = player.body.velocity.x;
+      bulletPodRight.body.velocity.x = player.body.velocity.x;
     }
     if (cursors.right.isDown && player.world.x < this.game.width - player.width) {
-      player.body.velocity.x = 550;
+      player.body.velocity.x = this.game.width * 0.5;
+      bulletPodLeft.body.velocity.x = player.body.velocity.x;
+      bulletPodRight.body.velocity.x = player.body.velocity.x;
     }
     if (cursors.up.isDown && player.world.y > 0) {
-      player.body.velocity.y = -350;
+      player.body.velocity.y = -this.game.height * 0.5;
+      bulletPodLeft.body.velocity.y = player.body.velocity.y;
+      bulletPodRight.body.velocity.y = player.body.velocity.y;
     }
     if (cursors.down.isDown && player.world.y < this.game.height - player.height) {
-      player.body.velocity.y = 350;
+      player.body.velocity.y = this.game.height * 0.5;
+      bulletPodLeft.body.velocity.y = player.body.velocity.y;
+      bulletPodRight.body.velocity.y = player.body.velocity.y;
     }
   },
 
@@ -795,6 +832,8 @@ function enemyHitsPlayer(bullet, player) {
   explosion.play();
   setTimeout(function() {
     player.kill();
+    bulletPodLeft.kill();
+    bulletPodRight.kill();
   }, (50));
   noShootingWaveTimer.destroy();
   shootingWaveTimer.destroy();

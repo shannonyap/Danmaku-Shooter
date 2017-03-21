@@ -26,13 +26,13 @@ Controls.prototype = {
     var controlsTitle = this.game.add.text(this.game.world.centerX, this.game.height * 0.1, 'CONTROLS', { font: fontSize * 2 + 'px Arial', fill: '#000000' });
     controlsTitle.anchor.setTo(0.5, 0.5);
 
-    var arrowKeysDescription = this.game.add.text(arrowKeys.x * 3, arrowKeys.y, 'Use the arrow keys to move your ship.', { font: fontSize + 'px Arial', fill: '#000000' });
+    var arrowKeysDescription = this.game.add.text(arrowKeys.x * 2.2, arrowKeys.y, 'Use the arrow keys to move your ship.', { font: fontSize + 'px Arial', fill: '#ffffff' });
     arrowKeysDescription.anchor.setTo(0.5, 0.5);
 
-    var spacebarKeyDescription = this.game.add.text(spacebarKey.x * 3, spacebarKey.y, 'Hold spacebar to fire the ship\'s weapon.', { font: fontSize + 'px Arial', fill: '#000000' });
+    var spacebarKeyDescription = this.game.add.text(spacebarKey.x * 2.2, spacebarKey.y, 'Hold spacebar to fire the ship\'s weapon.', { font: fontSize + 'px Arial', fill: '#ffffff' });
     spacebarKeyDescription.anchor.setTo(0.5, 0.5);
 
-    var shiftKeyDescription = this.game.add.text(shiftKey.x * 3, shiftKey.y, 'Press shift to toggle between laser mode and shot mode.', { font: fontSize + 'px Arial', fill: '#000000' });
+    var shiftKeyDescription = this.game.add.text(shiftKey.x * 2.5, shiftKey.y, 'Press shift to toggle between laser mode and shot mode.', { font: fontSize + 'px Arial', fill: '#ffffff' });
     shiftKeyDescription.anchor.setTo(0.5, 0.5);
 
     var backArrow = this.game.add.button(this.game.width * 0.95, this.game.height * 0.9, 'backArrow', this.backToMainMenu, this, 2, 1, 0);
